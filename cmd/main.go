@@ -31,11 +31,8 @@ func main() {
 		IsVideo:  isVideo,
 		PageSize: pagesize,
 	}
-
-	err := api.Check()
+	err := api.Execute()
 	if err != nil {
 		panic(err)
 	}
-
-	api.Execute()
 }

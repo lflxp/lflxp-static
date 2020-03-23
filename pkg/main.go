@@ -23,6 +23,11 @@ func (this *Apis) Check() error {
 }
 
 func (this *Apis) Execute() error {
+	err := this.Check()
+	if err != nil {
+		return err
+	}
+
 	HttpStaticServeForCorba(this)
 	return nil
 }
