@@ -26,4 +26,4 @@ pull:
 
 clean:
 	rm -f cmd/cmd
-	rm -f pkg/asset.go
+	rm -f lflxp-static 
