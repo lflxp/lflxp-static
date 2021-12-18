@@ -8,11 +8,13 @@ type Lflxp interface {
 }
 
 type Apis struct {
-	Port     string
-	Path     string
-	Types    string
-	IsVideo  bool
-	PageSize int
+	StaticPort string
+	Port       string
+	Path       string
+	Types      string
+	IsVideo    bool
+	PageSize   int
+	Raw        bool
 }
 
 func (this *Apis) Check() error {

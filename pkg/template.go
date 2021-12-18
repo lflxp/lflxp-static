@@ -13,11 +13,11 @@ var (
 )
 
 func init() {
-	htmlTemplate, err = Asset("video.html")
+	htmlTemplate, err = Static.ReadFile("static/video.html")
 	if err != nil {
 		panic(err)
 	}
-	elementTemplate, err = Asset("main.html")
+	elementTemplate, err = Static.ReadFile("static/main.html")
 	if err != nil {
 		panic(err)
 	}

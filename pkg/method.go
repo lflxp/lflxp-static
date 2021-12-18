@@ -11,8 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	assetfs "github.com/elazarl/go-bindata-assetfs"
-
 	"github.com/DeanThompson/ginpprof"
 	"github.com/chenjiandongx/ginprom"
 	"github.com/gin-gonic/gin"
@@ -78,10 +76,9 @@ func DecorderHandler(h http.Handler, g *gocui.Gui) http.Handler {
 }
 
 // 跨域设置
-func Cors(g *gocui.Gui) gin.HandlerFunc {
+func Cors() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		v, _ := g.View("history")
-		fmt.Fprintln(v, fmt.Sprintf("%s - %s - %s - http://%s%s", time.Now().Format("2006-01-02 15:04:05"), c.Request.RemoteAddr, c.Request.Method, c.Request.Host, c.Request.RequestURI))
+		log.Printf("%s - %s - %s - http://%s%s\n", time.Now().Format("2006-01-02 15:04:05"), c.Request.RemoteAddr, c.Request.Method, c.Request.Host, c.Request.RequestURI)
 
 		method := c.Request.Method
 		origin := c.Request.Header.Get("Origin")
@@ -122,24 +119,57 @@ func Cors(g *gocui.Gui) gin.HandlerFunc {
 	}
 }
 
-func serverGin(g *gocui.Gui) {
+func staticServer(port string) {
+	r := gin.Default()
+	r.Use(Cors())
+	r.Use(gin.Recovery())
+
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%s", port),
+		Handler: r,
+	}
+	r.StaticFS("/", http.Dir(path))
+	signal.Notify(closeChan,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGHUP,
+		os.Interrupt,
+		os.Kill,
+	)
+
+	go func() {
+		<-closeChan
+		log.Println("退出文件服务器 ...")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := server.Shutdown(ctx); err != nil {
+			log.Fatal("Server Shutdown:", err)
+		}
+		log.Println("退出文件服务器 Server exiting")
+	}()
+
+	log.Printf("开启Static Server 0.0.0.0:%s\n", port)
+	if err := server.ListenAndServe(); err != nil {
+		if err == http.ErrServerClosed {
+			log.Println("Server closed under request")
+		} else {
+			log.Fatal("Server closed unexpect", err.Error())
+		}
+	}
+}
+
+func serverGin() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
-	router.Use(Cors(g))
+	router.Use(Cors())
 	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		return ""
 	}))
 	// 使用 Recovery 中间件
 	router.Use(gin.Recovery())
 	router.Use(ginprom.PromMiddleware(nil))
-	// 加载html template模板
-	router.HTMLRender = HtmlTemp
-	router.GET("/metrics", ginprom.PromHandler(promhttp.Handler()))
-
-	// automatically add routers for net/http/pprof
-	// e.g. /debug/pprof, /debug/pprof/heap, etc.
-	ginpprof.Wrapper(router)
 
 	// LoggerWithFormatter 中间件会将日志写入 gin.DefaultWriter
 	// By default gin.DefaultWriter = os.Stdout
@@ -159,26 +189,50 @@ func serverGin(g *gocui.Gui) {
 		// )
 	}))
 
-	fs := assetfs.AssetFS{
-		Asset:    Asset,
-		AssetDir: AssetDir,
-	}
+	// fs := assetfs.AssetFS{
+	// 	Asset:    Asset,
+	// 	AssetDir: AssetDir,
+	// }
 
-	router.StaticFS("/dist", &fs)
+	if !raw {
+		// 加载html template模板
+		router.HTMLRender = HtmlTemp
+		router.GET("/metrics", ginprom.PromHandler(promhttp.Handler()))
 
-	router.StaticFS("/static", http.Dir(path))
-	// curl -X POST http://127.0.0.1:9090/upload -F "file=@/Users/lxp/123.mp4" -H "Content-Type:multipart/form-data"
-	router.POST("/upload", Upload)
+		// automatically add routers for net/http/pprof
+		// e.g. /debug/pprof, /debug/pprof/heap, etc.
+		ginpprof.Wrapper(router)
 
-	// 美化static
-	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "element", gin.H{
-			"isVideo": isvideo,
+		// router.StaticFS("/dist", &fs)
+		// 前端文件
+		// https://blog.csdn.net/LeoForBest/article/details/121041743
+		router.Any("/static/*filepath", func(c *gin.Context) {
+			staticServer := http.FileServer(http.FS(Static))
+			staticServer.ServeHTTP(c.Writer, c.Request)
 		})
-	})
+		// router.StaticFS("/dist", http.FS(Static))
 
-	if isvideo {
-		router.GET("/video", Video)
+		// curl -X POST http://127.0.0.1:9090/upload -F "file=@/Users/lxp/123.mp4" -H "Content-Type:multipart/form-data"
+		router.POST("/upload", Upload)
+
+		// 美化static
+		// router.GET("/x", func(c *gin.Context) {
+		// 	c.Redirect(302, "/index.html")
+		// })
+
+		router.GET("/", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "element", gin.H{
+				"isVideo":    isvideo,
+				"staticPort": staticPort,
+			})
+		})
+
+		// swagger
+		// router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+		if isvideo {
+			router.GET("/video", Video)
+		}
 	}
 
 	server := &http.Server{
@@ -196,14 +250,14 @@ func serverGin(g *gocui.Gui) {
 
 	go func() {
 		<-closeChan
-		log.Println("Shutdown Server ...")
+		log.Println("退出页面服务器 ...")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := server.Shutdown(ctx); err != nil {
 			log.Fatal("Server Shutdown:", err)
 		}
-		log.Println("Server exiting")
+		log.Println("退出页面服务器 Server exiting")
 	}()
 
 	if err := server.ListenAndServe(); err != nil {

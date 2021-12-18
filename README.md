@@ -120,3 +120,7 @@ Global Flags:
 * Upload web page (no curl command operation, convenient and fast)
 * View the monitoring indicators on the web page, which can be connected to the Prometheus server for monitoring
 * Web video file loading and viewing function
+
+# 参考
+
+> https://blog.csdn.net/LeoForBest/article/details/121041743

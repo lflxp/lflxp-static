@@ -1,9 +1,12 @@
-install: asset
+run:
+	cd cmd && go run main.go
+
+install: 
 	cp cmd/main.go .
 	go install
 	rm -f main.go
 
-build: asset
+build: 
 	cd cmd && go build && mv cmd ../lflxp-static
 
 asset: bindata clean

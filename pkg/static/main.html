@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<!-- import CSS -->
-	<link rel="stylesheet" href="/dist/index.css">
+	<link rel="stylesheet" href="/static/index.css">
 	<style>
 		html,body,#app{
 			height: 100%;
@@ -18,8 +18,8 @@
             <el-tooltip class="item" effect="dark" content="下载文件【/static】" placement="right">
                 <i class="el-icon-download"></i> 
             </el-tooltip></span>
-			<el-page-header @back="goBack" :content="afterUrl"></el-page-header>
-			<iframe src="/static" ref="iframe"  @load="geturl" id="static" width="100%" :height="clientHeight" frameborder="0" scrolling="yes"></iframe>
+			<el-page-header @back="goBack" :content="iframeurl"></el-page-header>
+			<iframe :src="iframeurl" ref="iframe" id="static" width="100%" :height="clientHeight" frameborder="0" scrolling="yes"></iframe>
 		</el-tab-pane>
 		<el-tab-pane><span slot="label">
             <el-tooltip class="item" effect="dark" content="上传文件【/upload】" placement="right">
@@ -27,6 +27,7 @@
             </el-tooltip></span>
 			<el-upload
 				class="upload-demo"
+				style="width: 50%"
 				drag
 				action="/upload"
 				multiple>
@@ -41,6 +42,11 @@
             </el-tooltip></span>
 			<iframe src="/video" ref="iframe" width="100%" :height="clientHeight" frameborder="0" scrolling="yes"></iframe>
 		</el-tab-pane>
+		<el-tab-pane><span slot="label"><el-tooltip class="item" effect="dark" content="DEBUG" placement="right">
+                <i class="el-icon-view"></i> 
+            </el-tooltip></span>
+			<iframe src="/debug/pprof" ref="iframe" width="100%" :height="clientHeight" frameborder="0" scrolling="yes"></iframe>
+		</el-tab-pane>
 		<el-tab-pane><span slot="label"><el-tooltip class="item" effect="dark" content="监控信息【/metrics】" placement="right">
                 <i class="el-icon-monitor"></i> 
             </el-tooltip></span>
@@ -50,9 +56,9 @@
 	</div>
 </body>
 	<!-- import Vue before Element -->
-	<script src="/dist/vue.js"></script>
+	<script src="/static/vue.js"></script>
 	<!-- import JavaScript -->
-	<script src="/dist/index.js"></script>
+	<script src="/static/index.js"></script>
 	<script>
 	new Vue({
 		el: '#app',
@@ -65,6 +71,13 @@
 				beforeUrl: '',
 				afterUrl: '',
 				clientHeight: document.documentElement.clientHeight - 20
+			}
+		},
+		computed: {
+			// 计算属性的 getter
+			iframeurl: function () {
+				// `this` 指向 vm 实例
+				return 'http://' + location.hostname + ':' + {{.staticPort}}
 			}
 		},
 		mounted() {
