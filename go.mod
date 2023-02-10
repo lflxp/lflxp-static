@@ -13,6 +13,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/nsf/termbox-go v0.0.0-20200204031403-4d2b513ad8be // indirect
 	github.com/prometheus/client_golang v1.5.1
+	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/swaggo/swag v1.7.6
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
