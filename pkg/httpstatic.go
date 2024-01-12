@@ -56,5 +56,5 @@ func HttpStaticServeForCorba(data *Apis) {
 	log.Println("curl -X POST http://127.0.0.1:9090/upload -F \"file=@/Users/lxp/123.mp4\" -H \"Content-Type:multipart/form-data\"")
 
 	open.Start(openUrl)
-	serverGin()
+	serverGin(data)
 }

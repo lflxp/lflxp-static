@@ -1,5 +1,5 @@
 run:
-	cd cmd && go run main.go
+	cd cmd && go run main.go --username a --password b
 
 install: 
 	cp cmd/main.go .

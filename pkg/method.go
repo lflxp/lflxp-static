@@ -153,7 +153,7 @@ func staticServer(ctx context.Context, port string) {
 	}
 }
 
-func serverGin() {
+func serverGin(data *Apis) {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
@@ -188,10 +188,18 @@ func serverGin() {
 	// 	AssetDir: AssetDir,
 	// }
 
+	var apiGroup *gin.RouterGroup
+
+	if data.Username == "" && data.Password == "" {
+		apiGroup = router.Group("")
+	} else {
+		apiGroup = router.Group("", gin.BasicAuth(gin.Accounts{data.Username: data.Password}))
+	}
+
 	if !raw {
 		// 加载html template模板
 		router.HTMLRender = HtmlTemp
-		router.GET("/metrics", ginprom.PromHandler(promhttp.Handler()))
+		apiGroup.GET("/metrics", ginprom.PromHandler(promhttp.Handler()))
 
 		// automatically add routers for net/http/pprof
 		// e.g. /debug/pprof, /debug/pprof/heap, etc.
@@ -207,14 +215,14 @@ func serverGin() {
 		// router.StaticFS("/dist", http.FS(Static))
 
 		// curl -X POST http://127.0.0.1:9090/upload -F "file=@/Users/lxp/123.mp4" -H "Content-Type:multipart/form-data"
-		router.POST("/upload", Upload)
+		apiGroup.POST("/upload", Upload)
 
 		// 美化static
 		// router.GET("/x", func(c *gin.Context) {
 		// 	c.Redirect(302, "/index.html")
 		// })
 
-		router.GET("/", func(c *gin.Context) {
+		apiGroup.GET("/", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "element", gin.H{
 				"isVideo":    isvideo,
 				"staticPort": staticPort,
@@ -225,7 +233,7 @@ func serverGin() {
 		// router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 		if isvideo {
-			router.GET("/video", Video)
+			apiGroup.GET("/video", Video)
 		}
 
 		// 404

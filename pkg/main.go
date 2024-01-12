@@ -15,6 +15,8 @@ type Apis struct {
 	IsVideo    bool
 	PageSize   int
 	Raw        bool
+	Username   string
+	Password   string
 }
 
 func (this *Apis) Check() error {

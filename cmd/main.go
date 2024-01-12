@@ -16,6 +16,7 @@ var (
 	types                         string
 	raw, debug                    bool
 	src, dest, clean, cleanString string
+	username, password            string
 )
 
 func init() {
@@ -31,6 +32,8 @@ func init() {
 	flag.StringVar(&dest, "dest", "", "复制文件目标文件或文件夹")
 	flag.StringVar(&clean, "clean", "", "删除文件或文件夹,如：/tmp")
 	flag.StringVar(&cleanString, "contains", "", "删除文件名包含的内容，如：.temp")
+	flag.StringVar(&username, "username", "", "用户名")
+	flag.StringVar(&password, "password", "", "密码")
 	flag.Parse()
 }
 
@@ -54,6 +57,8 @@ func main() {
 			IsVideo:    isVideo,
 			PageSize:   pagesize,
 			Raw:        raw,
+			Username:   username,
+			Password:   password,
 		}
 		err := api.Execute()
 		if err != nil {
