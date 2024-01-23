@@ -17,6 +17,7 @@ type Apis struct {
 	Raw        bool
 	Username   string
 	Password   string
+	OpenUrl    bool
 }
 
 func (this *Apis) Check() error {
